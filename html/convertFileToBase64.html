@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Title</title>
+		<style>
+			*{
+            margin: 0;
+            padding: 0;
+        }
+        body{
+            padding-left: 10px;
+        }
+
+        ul li{
+            list-style-type: none;
+            padding-top: 10px;
+        }
+
+        .textarea-s{
+            width: 800px;
+            height: 300px;
+        }
+    </style>
+	</head>
+	<body>
+		<div>
+			<input type="file" multiple id="cFile" onchange="fileToBase64(this)">
+		</div>
+		<div id="convert-container">
+			<ul></ul>
+		</div>
+	</body>
+</html>
+<script src="../js/jquery-3.4.1.js"></script>
+<script>
+	// 输出编码
+	var outCode = 0;
+	
+	/**
+	 * 将文件转换成base64
+	 * @param e 目标对象
+	 */
+	function fileToBase64(e) {
+		// 选择的文件对象
+		var files = e.files;
+		var filesArr = [];
+		for (var i = 0; i < files.length; i++) {
+			filesArr.push(files[i]);
+		}
+		// 获取文件组数，将文件分组
+		var filesGroup = Math.ceil(filesArr.length / 5);
+		for (var i = 0; i < filesGroup; i++) {
+			_doFiles(filesArr.slice(i * 5, (i + 1) * 5));
+		}
+	}
+
+	/**
+	 * 实际将文件转换成base64处理方法
+	 * @param e 目标对象
+	 * @private 私有方法
+	 */
+	function _convertFileToBase64(e) {
+		// 文件名称
+		var name = e.name;
+		// 文件大小
+		var size = e.size;
+		var reader = new FileReader();
+		reader.readAsDataURL(e);
+		reader.onload = function() {
+			outCode++;
+			var li = "<li>" +
+				"<p>" +
+				"<span>编码：" + outCode + "</span>" +
+				"&nbsp;&nbsp;&#921;&nbsp;&nbsp;" +
+				"<span>文件名：" + name + "</span>" +
+				"&nbsp;&nbsp;&#921;&nbsp;&nbsp;" +
+				"<span>文件大小：" + _formatSize(size) + "</span>" +
+				"</p>" +
+				"<textarea class='textarea-s'>" + this.result + "</textarea>" +
+				"</li>";
+			$("#convert-container ul").append(li);
+		}
+	}
+
+	/**
+	 * 处理文件大小限制判断
+	 * @param size 文件大小
+	 * @returns {{msg: *, code: *}} 返回结果，msg:消息内容，code：消息代码
+	 * @private 私有方法
+	 */
+	function _fileSizeLimit(size) {
+		var re;
+		var code = "01";
+		var msg = "传值为空！";
+		if (!_isEmpty(size)) {
+			var s = parseInt(size);
+			if ("NaN" == s.toString()) {
+				code = "02";
+				msg = "传值中包含非数值类型!";
+			} else {
+				// 限制大小为5M
+				var limit = 1024 * 1024 * 5;
+				if (size > limit) {
+					code = "03";
+					msg = "文件最大限制为5M，已超出处理范围，无法处理！";
+				} else {
+					code = "00";
+					msg = "处理成功！";
+				}
+			}
+		}
+		re = {
+			"code": code,
+			"msg": msg
+		};
+		return re;
+	}
+
+	/**
+	 * 格式数据大小显示形式
+	 * @param size 数据大小-字节
+	 * @returns {*} 不为空返回格式结果，为空返回0
+	 * @private 私有方法
+	 */
+	function _formatSize(size) {
+		var r;
+		if (!_isEmpty(size)) {
+			var s = parseInt(size);
+			if ("NaN" != s.toString()) {
+				var j = 1024 * 1024;
+				if (s > j) {
+					r = (s / j).toFixed(1) + "M";
+				} else {
+					r = (s / 1024).toFixed(1) + "K";
+				}
+			}
+		}
+		return !_isEmpty(r) ? r : 0;
+	}
+
+	/**
+	 * 判断处理的值是否为空或未定义
+	 * @param v 传值
+	 * @returns {boolean} 返回布尔类型值，true:为空或未定义，false：不为空
+	 * @private 私有方法
+	 */
+	function _isEmpty(v) {
+		if (v == undefined || v == "" || v == null) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * 批量处理文件
+	 * @param files 批量文件
+	 * @private 私有方法
+	 */
+	function _doFiles(files) {
+		if (!_isEmpty(files)) {
+			$.each(files, function() {
+				var r = _fileSizeLimit(this.size);
+				if ("00" == r.code) {
+					console.log(r.msg);
+					_convertFileToBase64(this);
+				} else {
+					console.log(r.msg);
+					// ...
+				}
+			});
+		}
+	}
+</script>
