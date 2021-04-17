@@ -36,7 +36,8 @@
 <script>
 	// 输出编码
 	var outCode = 0;
-	
+	var list = [];
+
 	/**
 	 * 将文件转换成base64
 	 * @param e 目标对象
@@ -65,22 +66,19 @@
 		var name = e.name;
 		// 文件大小
 		var size = e.size;
-		var reader = new FileReader();
-		reader.readAsDataURL(e);
-		reader.onload = function() {
-			outCode++;
-			var li = "<li>" +
-				"<p>" +
-				"<span>编码：" + outCode + "</span>" +
-				"&nbsp;&nbsp;&#921;&nbsp;&nbsp;" +
-				"<span>文件名：" + name + "</span>" +
-				"&nbsp;&nbsp;&#921;&nbsp;&nbsp;" +
-				"<span>文件大小：" + _formatSize(size) + "</span>" +
-				"</p>" +
-				"<textarea class='textarea-s'>" + this.result + "</textarea>" +
-				"</li>";
-			$("#convert-container ul").append(li);
-		}
+		outCode++;
+		var tip = "<li id='n" + outCode + "'>" +
+			"<p>" +
+			"<span>编码：" + outCode + "</span>" +
+			"&nbsp;&nbsp;&#921;&nbsp;&nbsp;" +
+			"<span>文件名：" + name + "</span>" +
+			"&nbsp;&nbsp;&#921;&nbsp;&nbsp;" +
+			"<span>文件大小：" + _formatSize(size) + "</span>" +
+			"</p>" +
+			"<textarea class='textarea-s'>正在转化中...</textarea>" +
+			"</li>";
+		$("#convert-container ul").append(tip);
+		list.push(e);
 	}
 
 	/**
@@ -167,6 +165,22 @@
 				} else {
 					console.log(r.msg);
 					// ...
+				}
+			});
+			_writeText();
+		}
+	}
+
+	/**
+	 * 向指定文本区域输出转码后的内容
+	 */
+	function _writeText() {
+		if (!_isEmpty(list)) {
+			$.each(list, function(index) {
+				var reader = new FileReader();
+				reader.readAsDataURL(this);
+				reader.onload = function() {
+					$("#n" + (index + 1) + " textarea").html(this.result);
 				}
 			});
 		}
