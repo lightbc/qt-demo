@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+			}
+
+			body {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+
+			#container {
+				position: relative;
+			}
+
+			#right {
+				overflow: auto;
+			}
+
+			.textarea-container {
+				float: left;
+				margin: 20px;
+				padding: 10px;
+				width: 500px;
+				height: 550px;
+				border: 2px solid gray;
+			}
+
+			.textarea-container::after {
+				content: "";
+				display: block;
+				clear: both;
+			}
+
+			#textarea {
+				width: 100%;
+				height: 100%;
+				resize: none;
+				outline: none;
+				border: none;
+			}
+
+			#data-show {
+				font-size: 16px;
+				font-weight: 700;
+			}
+
+			.key-styl {
+				color: #92278F;
+			}
+
+			.value-str-styl {
+				color: #3AB54A;
+			}
+
+			.value-styl {
+				color: lightskyblue;
+			}
+
+			#help {
+				display: inline-block;
+				width: 20px;
+				height: 20px;
+				background-color: #808080;
+				color: #fff;
+				border-radius: 10px;
+				position: absolute;
+				bottom: 0;
+				left: 555px;
+				text-align: center;
+				line-height: 20px;
+			}
+
+			#help:hover {
+				cursor: default;
+			}
+
+			#help:hover::before {
+				position: absolute;
+				top: 10px;
+				left: 0;
+				content: "";
+				width: 0;
+				height: 0;
+				border-width: 10px;
+				border-style: solid;
+				border-color: transparent transparent lightgray;
+			}
+
+			#help:hover::after {
+				position: absolute;
+				width: 200px;
+				top: 30px;
+				left: -95px;
+				padding: 3px 5px;
+				color: darkgoldenrod;
+				content: "暂只支持粘贴数据解析";
+				background-color: lightgray;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="container">
+			<div id="left" class="textarea-container">
+				<textarea id="textarea" class="textarea"></textarea>
+			</div>
+			<div id="right" class="textarea-container">
+				<pre id="data-show"></pre>
+			</div>
+			<span id="help">?</span>
+		</div>
+	</body>
+</html>
+<script>
+	window.onload = function() {
+		keydown();
+	}
+
+	/**
+	 * 键盘按键按下监听
+	 */
+	function keydown() {
+		document.addEventListener('keydown', function(e) {
+			if (e.ctrlKey && e.keyCode === 86) {// 监听ctrl+v
+				keyup();
+			}
+		});
+	}
+
+	/**
+	 * 键盘按键释放监听
+	 */
+	function keyup() {
+		document.addEventListener('keyup', function(e) {
+			var value = document.getElementById("left").getElementsByClassName("textarea")[0].value;
+			var showValue = document.getElementById("data-show");
+			if (e.keyCode === 86) {
+				if (!isEmpty(value)) {// 判断复制的内容是否为空
+					doValue(value);
+				}
+			}else{
+				if(isEmpty(value)){// 当按下并释放的按键使粘贴区域的值为空时,清空显示区域内容
+					showValue.innerHTML = "";
+				}
+			}
+		});
+	}
+
+	/**
+	 * 处理粘贴的内容
+	 * @param {Object} value 复制的文本内容
+	 */
+	function doValue(value) {
+		if (isJson(value)) {// 判断是否为json数据
+			formatData(value);
+		} else {
+			error();
+		}
+	}
+
+	/**
+	 * 格式化显示数据内容
+	 * @param {Object} value 复制的文本内容
+	 */
+	function formatData(value) {
+		var dataShow = document.getElementById("data-show");
+		var json = JSON.parse(value);
+		var result = doJson(json);
+		dataShow.innerHTML = result;
+	}
+
+	function error() {
+		alert("数据格式有误！");
+	}
+
+	/**
+	 * 判断内容是否为接送数据
+	 * @param {Object} value 复制的文本内容
+	 */
+	function isJson(value) {
+		try {
+			JSON.parse(value);
+			return true;
+		} catch (e) {
+			//TODO handle the exception
+			console.log(e);
+		}
+		return false;
+	}
+
+	/**
+	 * 处理json数据
+	 * @param {Object} value 复制的文本内容
+	 */
+	function doJson(value) {
+		var f = Array.isArray(value);
+		var newValue = "";
+		if (f) {
+			newValue += doArray(value, 0);
+		} else {
+			newValue += doJsonObject(value, 0);
+		}
+		return newValue;
+	}
+
+	/**
+	 * 处理json数组内容
+	 * @param {Object} value 复制的文本内容
+	 * @param {Object} n 数据深度，json数据中是否嵌套json数据
+	 * @param {Object} m 判断是否为最外层数据，1：不为最外层数据
+	 */
+	function doArray(value, n, m) {
+		var newArray = "[\n";
+		var idt = "";
+		if (n > 0) {
+			idt = getSpace(n);
+			n++;
+		}
+		for (var i = 0; i < value.length; i++) {
+			if (!isEmpty(value[i]) && value[i].constructor === Object) {// 判断嵌套数据是否为json对象,是的话调用处理json对象的方法
+				newArray += doJsonObject(value[i], n, 1) + ",\n";
+			} else if (!isEmpty(value[i]) && value[i].constructor === String) {
+				newArray += idt + "  <span class='value-str-styl'>\"" + value[i] + "\"</span>,\n";
+			} else {
+				newArray += idt + "  <span class='value-styl'>\"" + value[i] + "\"</span>,\n";
+			}
+		}
+		newArray = newArray.trim().substr(0, newArray.length - 2);
+		newArray += "\n" + idt + "]";
+		return newArray;
+	}
+
+	/**
+	 * 处理json对象内容
+	 * @param {Object} value 复制的文本内容
+	 * @param {Object} n 数据深度，json数据中是否嵌套json数据
+	 * @param {Object} m 判断是否为最外层数据，1：不为最外层数据
+	 */
+	function doJsonObject(value, n, m) {
+		var newJsonObject = "";
+		var idt = "";
+		if (n > 0) {
+			idt = getSpace(n);
+			console.log("n:" + idt)
+		}
+		if (1 === m) {
+			newJsonObject = idt + "{\n";
+		} else {
+			newJsonObject = "{\n";
+		}
+		for (var key in value) {
+			if (!isEmpty(value[key]) && value[key].constructor === Array) {// 判断嵌套数据是否为json数组,是的话调用处理json数组的方法
+				newJsonObject += idt + "  <span class='key-styl'>\"" + key + "\"</span>:" + doArray(value[key], ++n, 1) +
+					",\n";
+			} else if (!isEmpty(value[key]) && value[key].constructor === Object) {// 判断嵌套数据是否为json对象,是的话调用处理json对象的方法
+				newJsonObject += idt + "  <span class='key-styl'>\"" + key + "\"</span>:" + doJsonObject(value[key], ++n,
+					null) + ",\n";
+			} else if (!isEmpty(value[key]) && value[key].constructor === String || "" === value[key]) {
+				newJsonObject += idt + "  <span class='key-styl'>\"" + key + "\"</span>:<span class='value-str-styl'>\"" +
+					value[key] + "\"</span>,\n";
+			} else {
+				newJsonObject += idt + "  <span class='key-styl'>\"" + key + "\"</span>:<span class='value-styl'>" +
+					value[key] + "</span>,\n";
+			}
+		}
+		newJsonObject = newJsonObject.trim().substr(0, newJsonObject.length - 2);
+		newJsonObject += "\n" + idt + "}";
+		return newJsonObject;
+	}
+
+	/**
+	 * 获取缩进量
+	 * @param {Object} value 数据嵌套深度
+	 */
+	function getSpace(value) {
+		var re = "";
+		if (!isEmpty(value)) {
+			for (var i = 0; i < value; i++) {
+				re += "  ";
+			}
+		}
+		return re;
+	}
+
+	/**
+	 * 为空判断
+	 * @param {Object} value 
+	 */
+	function isEmpty(value) {
+		if ("" !== value && null !== value && undefined !== value) {
+			return false;
+		}
+		return true;
+	}
+</script>
