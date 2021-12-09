@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>字符Unicode互转</title>
+		<style>
+			html,body{
+				margin: 0;
+				padding: 0;
+			}
+			
+			#container{
+				margin-top: 40px;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+			
+			.layout{
+				float: left;
+			}
+			
+			.layout::after{
+				content: "";
+				display: block;
+				clear: both;
+			}
+			
+			.layout textarea{
+				width: 500px;
+				height: 300px;
+				resize: none;
+				color: gray;
+				border: 1px solid gray;
+				outline: none;
+			}
+			
+			#middle input{
+				display: block;
+				margin: 35px 15px;
+			}
+			
+			.convert-i{
+				padding: 7px;
+				color: gray;
+				background-color: #FFFFFF;
+				border: 1px solid gray;
+			}
+			
+			.convert-i:hover{
+				border-color: #5F9EA0;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="container">
+			<div id="left" class="layout">
+				<textarea id="leftTextArea"></textarea>
+			</div>
+			<div id="middle" class="layout">
+				<input type="button" class="convert-i" value="字符转Unicode>>" onclick="_charactersToUnicode()"/>
+				<input type="button" class="convert-i" value="<<Unicode转字符" onclick="_unicodeToCharacters()"/>
+			</div>
+			<div id="right" class="layout">
+				<textarea id="rightTextArea"></textarea>
+			</div>
+		</div>
+	</body>
+</html>
+<script type="text/javascript">
+	//获取左右文本域元素
+	var leftTextArea=document.getElementById("leftTextArea");
+	var rightTextArea=document.getElementById("rightTextArea");
+
+	/**
+	 * 字符转Unicode
+	 */
+	function _charactersToUnicode(){
+		var convertValue="";
+		var leftValue=leftTextArea.value;
+		
+		if(leftValue){
+			for(var i=0;i<leftValue.length;i++){
+				convertValue+="\\u"+leftValue.charCodeAt(i).toString(16);
+			}
+			rightTextArea.value=convertValue.trim();
+		}else{
+			alert("未有相关输入信息!");
+		}
+	}
+	
+	/**
+	 * Unicode转字符
+	 */
+	function _unicodeToCharacters(){
+		var convertValue="";
+		var rightValue=rightTextArea.value;
+		
+		if(rightValue){
+			if(rightValue.indexOf("\\u") != -1){
+				var splitContent=rightValue.split("\\u");
+				for(var i=0;i<splitContent.length;i++){
+					if(!splitContent[i]){
+						continue;
+					}
+					if(_isUnicode(splitContent[i])){
+						convertValue+=String.fromCharCode(parseInt(splitContent[i],16));
+					}else{
+						alert("输入的内容中检测到非Unicode数据!");
+					}
+				}
+				leftTextArea.value=convertValue.trim();
+			}else{
+				alert("输入内容中不包含Unicode格式数据!");
+			}
+		}else{
+			alert("未有相关Unicode信息输入!");
+		}
+	}
+	
+	/**
+	 * 判断是否是完整的Unicode格式数据
+	 * @param {Object} v 检测的字符
+	 */
+	function _isUnicode(v){
+		var regx=/[0-9a-fA-F]/;
+		for(var i=0;i<v.length;i++){
+			if(regx.test(v[i])){
+				continue;
+			}else{
+				return false;
+			}
+		}
+		return true;
+	}
+	
+</script>
