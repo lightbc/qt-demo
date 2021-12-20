@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>倒计时</title>
+		<link rel="stylesheet" type="text/css" href="../layui/css/layui.css" />
+		<script type="text/javascript" src="../js/jquery-3.4.1.js"></script>
+		<style type="text/css">
+			table {
+				text-align: center;
+				margin: auto;
+			}
+
+			table tr td {
+				padding: 5px 5px;
+			}
+
+			.date,
+			.timer {
+				width: 275px;
+				height: 38px;
+				text-align: center;
+				display: inline-block;
+			}
+
+			.opt-btn {
+				width: 100px;
+			}
+		</style>
+	</head>
+	<body>
+		<table border="0">
+			<tr>
+				<td colspan="2">
+					<input type="text" id="date" class="layui-input date" autocomplete="off" readonly placeholder="请选择时间" />
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2">
+					<input type="text" id="timer" class="layui-input timer" readonly placeholder="倒计时显示器" />
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2">
+					<button type="text" id="startOrPaused" class="layui-btn opt-btn" data-v="0" onclick="startOrPaused(this)">开始</button>
+				</td>
+			</tr>
+		</table>
+	</body>
+</html>
+<script type="text/javascript" src="../layui/layui.js"></script>
+<script type="text/javascript">
+	var endDate, timer;
+
+	// 加载layui的laydate模块
+	layui.use('laydate', function() {
+		var laydate = layui.laydate;
+
+		laydate.render({
+			elem: '#date', // 指定元素
+			type: 'datetime', // 选择控件类型
+			min: 0, // 最小值,0:当前时间
+			done: function(value) { // 时间选择后回调
+				endDate = value;
+				if (timer != null) { //判断定时器是否为空,不为空清除定时器
+					clearInterval(timer);
+				}
+				$("#timer").val("");
+				start();
+			}
+		});
+	});
+
+	/**
+	 * 时间处理计时器
+	 * @param {Object} t 剩余时间
+	 */
+	function doTimer(t) {
+		var timeDiff = parseInt(t) / 1000;
+		var days = Math.floor(timeDiff / (24 * 60 * 60));
+		var remTime = timeDiff % (24 * 60 * 60);
+		var hours = Math.floor(remTime / (60 * 60));
+		var remMinutes = remTime % (60 * 60);
+		var minutes = Math.floor(remMinutes / 60);
+		var seconds = Math.floor(remTime % 60);
+
+		days = days > 9 ? days : "0" + days;
+		hours = hours > 9 ? hours : "0" + hours;
+		minutes = minutes > 9 ? minutes : "0" + minutes;
+		seconds = seconds > 9 ? seconds : "0" + seconds;
+
+		return days + "天" + hours + "小时" + minutes + "分钟" + seconds + "秒";
+	}
+
+	/**
+	 * 开始/暂停
+	 * @param {Object} o 当前对象
+	 */
+	function startOrPaused(o) {
+		var e = new Date(endDate);
+		var n = new Date();
+		if (e > n) { // 判断选择的时间是否大于当前时间
+			var dv = $(o).attr("data-v");
+			if (dv == 0) {
+				paused();
+				timer = setInterval(function() {
+					var timeRemain = new Date(endDate) - new Date(); //获取剩余时间
+					if (timeRemain > 0) {
+						var showContent = doTimer(timeRemain);
+						$("#timer").val(showContent);
+					} else { //剩余时间为0时,清除定时器
+						clearInterval(timer);
+						$("#timer").val("");
+						start();
+					}
+				}, 1000);
+			} else {
+				clearInterval(timer);
+				start();
+			}
+		} else {
+			alert("选择的时间需大于当前时间！");
+		}
+	}
+
+	/**
+	 * 开始
+	 */
+	function start() {
+		$("#startOrPaused").text("开始");
+		$("#startOrPaused").attr("data-v", "0");
+	}
+
+	/**
+	 * 暂停
+	 */
+	function paused() {
+		$("#startOrPaused").text("暂停");
+		$("#startOrPaused").attr("data-v", "1");
+	}
+</script>
