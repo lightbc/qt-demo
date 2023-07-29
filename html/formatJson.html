@@ -26,16 +26,16 @@
 				width: 40%;
 				height: 100%;
 				border: 2px solid lightgray;
-				overflow: auto;
 			}
-			::-webkit-scrollbar{
+
+			::-webkit-scrollbar {
 				width: 5px;
 			}
-			
-			::-webkit-scrollbar-thumb{
+
+			::-webkit-scrollbar-thumb {
 				background-color: lightgray;
 			}
-			
+
 			#left {
 				margin-right: 4%;
 			}
@@ -50,7 +50,11 @@
 				border: none;
 				outline: none;
 				resize: none;
-				overflow: hidden;
+			}
+
+			#textarea,
+			#right {
+				overflow: auto;
 			}
 
 			.key {
@@ -132,9 +136,12 @@
 			json = JSON.parse(json);
 			json = JSON.stringify(json);
 		}
+
 		// 在花括号前后添加换行
 		reg = /([\{\}])/g;
 		json = json.replace(reg, '\r\n$1\r\n');
+		reg = /"(.*)\r\n\[\r\n/g;
+		json = json.replace(reg, '"$1[');
 		// value为json对象时，开始的花括号不换行显示
 		reg = /(:\r\n\{)/g;
 		json = json.replace(reg, ':{');
@@ -175,7 +182,7 @@
 				}
 				node = node.replace(/("[\s\S]*"):/, '<span class="key">$1</span>:')
 				node = node.replace(/:("[\s\S]*")/, ':<span class="value">$1</span>');
-				node = '<div class="line">'+padding + node + '\r\n'+'</div>';
+				node = '<div class="line">' + padding + node + '\r\n</div>';
 				formatted += node;
 				pad += indent;
 			}
