@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<style>
+			.container {
+				display: inline-block;
+				border: 1px solid lightgray;
+				width: 45%;
+				height: 600px;
+			}
+
+			.input {
+				margin: 10px 5px;
+				width: 80%;
+			}
+
+			#key {
+				height: 26px;
+			}
+
+			#value {
+				height: 400px;
+				resize: none;
+			}
+
+			.btn {
+				background-color: lightseagreen;
+				border: 1px solid gray;
+				padding: 7px;
+				color: white;
+			}
+
+			.btn:hover {
+				opacity: .7;
+			}
+
+			#left {
+				position: absolute;
+				left: 10px;
+				padding-left: 20px;
+			}
+
+			#right {
+				position: absolute;
+				right: 10px;
+			}
+
+			.op-sty {
+				border: 1px solid lightgray;
+				padding: 5px;
+				cursor: pointer;
+			}
+
+			.show {
+				display: block;
+				position: absolute;
+				top: 7px;
+				right: 7px;
+				cursor: pointer;
+			}
+
+			.hide {
+				display: none;
+			}
+
+			#pre {
+				padding: 7px;
+			}
+
+			.tip {
+				position: fixed;
+				top: 10px;
+				left: 50%;
+				z-index: 99999999;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="left" class="container">
+			<div>
+				<input id="key" class="input" type="text" placeholder="请输入参数的名称" autocomplete="off" />
+			</div>
+			<div>
+				<textarea id="value" class="input" placeholder="请输入参数的值"></textarea>
+			</div>
+			<div>
+				<input class="btn" type="button" value="-> JSON" onclick="convert()" title="转化成JSON数据格式并格式化显示" />
+			</div>
+		</div>
+		<div id="right" class="container">
+			<pre id="pre"></pre>
+			<div id="operate-container" class="hide">
+				<span class="op-sty" onclick="copy()">复制</span>
+				<span class="op-sty" onclick="download()">下载</span>
+			</div>
+		</div>
+	</body>
+</html>
+<script>
+	// 页面窗体加载
+	window.onload = function() {
+		toggle();
+	}
+
+	/**
+	 * 数据格式转换
+	 */
+	function convert() {
+		// 键
+		var key = document.getElementById("key");
+		// 值
+		var value = document.getElementById("value");
+		// 显示区域
+		var pre = document.getElementById("pre");
+
+		// 移除两端空白
+		var kc = key.value.trim();
+		var vc = value.value.trim();
+
+		// 键名不能为空
+		if (!isEmpty(kc)) {
+			// 多行
+			if (vc.indexOf("\n") != -1) {
+				var vcs = vc.split("\n");
+				if (null != vcs && vcs.length > 0) {
+					var arr = new Array();
+					// 多条数据拼接组合
+					for (var i = 0; i < vcs.length; i++) {
+						var map = new Map();
+						map.set(kc, vcs[i]);
+						var toJson = Object.fromEntries(map);
+						arr.push(toJson);
+					}
+					// 转换成json数组字符串
+					var toJsonArr = JSON.stringify(arr, null, 2);
+					// 填充到显示区域中
+					pre.innerText = toJsonArr;
+				}
+				// 单行
+			} else if (!isEmpty(vc) && vc.indexOf("\n") == -1) {
+				// 数据处理
+				var map = new Map();
+				map.set(kc, vc);
+				var toJson = Object.fromEntries(map);
+				// 转换成json字符串
+				pre.innerText = JSON.stringify(toJson, null, 2);
+			}
+		}
+	}
+
+	/**
+	 * 显隐组件
+	 */
+	function toggle() {
+		var right = document.getElementById("right");
+		var op = document.getElementById("operate-container");
+
+		// 显示操作组件
+		right.onmouseover = function() {
+			var pre = document.getElementById("pre");
+			var preContent = pre.innerText;
+			if (!isEmpty(preContent)) {
+				op.classList.remove("hide");
+				op.classList.add("show");
+			}
+		}
+		// 隐藏操作组件
+		right.onmouseout = function() {
+			op.classList.remove("show");
+			op.classList.add("hide");
+		}
+	}
+
+	/**
+	 * 复制按钮功能
+	 */
+	function copy() {
+		var pre = document.getElementById("pre");
+		var content = pre.innerText;
+
+		// 判断json显示区域的内容是否为空
+		if (!isEmpty(content)) {
+			try {
+				var right = document.getElementById("right");
+				// 创建临时文本域元素
+				var newInput = document.createElement("textarea");
+				// 赋值临时元素
+				newInput.value = content;
+				// 将临时的元素对象添加到文档节点中
+				document.body.appendChild(newInput);
+				// 选中临时元素
+				newInput.select();
+				// 复制临时元素中的内容
+				document.execCommand('Copy');
+				// 删除创建的临时元素
+				document.body.removeChild(newInput);
+				tips("复制", true);
+			} catch (e) {
+				tips("复制", false);
+			}
+		}
+	}
+
+	/**
+	 * 下载内容
+	 */
+	function download() {
+		var pre = document.getElementById("pre");
+		var content = pre.innerText;
+
+		// 判断json显示区域的内容是否为空
+		if (!isEmpty(content)) {
+			try {
+				// 将文本内容转换成blob格式
+				let blob = new Blob([content], {
+					type: "text/plain;charset=utf-8"
+				});
+				// 转换成文件流
+				let reader = new FileReader();
+				reader.readAsDataURL(blob);
+				reader.onload = function(e) {
+					// 创建临时元素
+					let a = document.createElement('a');
+					// 下载时文件名称
+					a.download = new Date().getTime() + ".json";
+					a.href = e.target.result;
+					// 文档添加临时元素
+					document.body.appendChild(a);
+					// 触发下载
+					a.click();
+					// 删除文档中的临时元素
+					document.body.removeChild(a);
+					tips("下载", true);
+				}
+			} catch (e) {
+				tips("下载", false);
+			}
+		}
+	}
+
+	/**
+	 * 提示信息
+	 * @param {Object} prefix 提示前缀信息（复制/下载）
+	 * @param {Object} success 是否成功，true-成功，false-失败
+	 */
+	function tips(prefix, success) {
+		var tipEle = document.createElement("div");
+		tipEle.setAttribute("class", "tip")
+		// 提示内容
+		var tipContent = "<span style='color:red;padding:7px;background-color:rgba(255,0,0,.2)'>×	" + prefix +
+			"失败！</span>";
+		if (success) {
+			tipContent = "<span style='color:green;padding:7px;background-color:rgba(0,255,0,.2)'>√	" + prefix +
+				"成功！</span>";
+		}
+		tipEle.innerHTML = tipContent;
+		document.body.appendChild(tipEle);
+		// 2秒后移除临时元素
+		setTimeout(function() {
+			document.body.removeChild(tipEle);
+		}, 2000);
+	}
+
+	/**
+	 * 为空判断
+	 * @param {Object} v 判断的值
+	 */
+	function isEmpty(v) {
+		if (undefined == v || null == v || "" == v.trim()) {
+			return true;
+		}
+		return false;
+	}
+</script>
