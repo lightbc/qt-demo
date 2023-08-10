@@ -2,7 +2,8 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title></title>
+		<title>格式化高亮显示JSON数据</title>
+		<link rel="stylesheet" href="../css/prism.css">
 		<style>
 			* {
 				margin: 0;
@@ -23,13 +24,15 @@
 
 			.textarea-container {
 				float: left;
+				padding: 5px;
 				width: 40%;
 				height: 100%;
 				border: 2px solid lightgray;
 			}
 
 			::-webkit-scrollbar {
-				width: 5px;
+				width: 7px;
+				height: 7px;
 			}
 
 			::-webkit-scrollbar-thumb {
@@ -52,11 +55,6 @@
 				resize: none;
 			}
 
-			#textarea,
-			#right {
-				overflow: auto;
-			}
-
 			.key {
 				color: #92278F;
 			}
@@ -76,15 +74,16 @@
 				<textarea id="textarea"></textarea>
 			</div>
 			<div id="right" class="textarea-container">
-				<pre id="showFormat"></pre>
+				<pre
+					style="margin: 0;padding:0;height:100%;background-color: #fff;"><code id="showFormat" class="language-javascript"></code></pre>
 			</div>
 		</div>
 	</body>
 </html>
+<script src="../js/prism.js"></script>
 <script>
 	window.onload = function() {
 		var ele = document.getElementById("textarea");
-
 		keyUpListener(ele);
 	}
 
@@ -105,90 +104,22 @@
 	 */
 	function parse(val) {
 		var showFormat = document.getElementById("showFormat");
+		// 判断输入的数据信息是否有效
 		if (undefined == val || null == val || "" == val.trim()) {
 			showFormat.innerHTML = "";
 			return;
 		}
+		// 判断输入的数据信息是否为json格式数据
 		if (isJson(val)) {
-			var pj = parseJson(val);
+			var json = JSON.parse(val);
+			var pj = JSON.stringify(json, null, 2);
 			showFormat.innerHTML = pj;
 		} else {
 			showFormat.innerHTML = "Content is not JSON.";
 		}
+		// 高亮显示code标签中的json内容数据
+		Prism.highlightAll();
 	}
-
-
-	/**
-	 * 解析json数据
-	 * @param {Object} json
-	 */
-	function parseJson(json) {
-		var reg = null,
-			formatted = '',
-			pad = 0,
-			// 缩进量
-			PADDING = '  ';
-		if (typeof json !== 'string') {
-			// 确保为JSON字符串
-			json = JSON.stringify(json);
-		} else {
-			//已经是一个字符串，所以解析和重新字符串化以删除额外的空白
-			json = JSON.parse(json);
-			json = JSON.stringify(json);
-		}
-
-		// 在花括号前后添加换行
-		reg = /([\{\}])/g;
-		json = json.replace(reg, '\r\n$1\r\n');
-		reg = /"(.*)\r\n\[\r\n/g;
-		json = json.replace(reg, '"$1[');
-		// value为json对象时，开始的花括号不换行显示
-		reg = /(:\r\n\{)/g;
-		json = json.replace(reg, ':{');
-		// 在方括号前后添加新行
-		reg = /([\[\]])/g;
-		json = json.replace(reg, '\r\n$1\r\n');
-		// value为json数组时，开始的方括号不换行显示
-		reg = /(:\r\n\[)/g;
-		json = json.replace(reg, ':[');
-		// 在逗号后添加新行
-		reg = /(\,)/g;
-		json = json.replace(reg, '$1\r\n');
-		// 删除多个换行
-		reg = /(\r\n\r\n)/g;
-		json = json.replace(reg, '\r\n');
-		// 删除逗号前的换行
-		reg = /\r\n\,/g;
-		json = json.replace(reg, ',');
-
-		var jsons = json.trim().split('\r\n');
-		if (jsons != null) {
-			for (var j = 0; j < jsons.length; j++) {
-				var node = jsons[j];
-				var i = 0,
-					indent = 0,
-					padding = '';
-				if (node.match(/\{$/) || node.match(/\[$/)) {
-					indent = 1;
-				} else if (node.match(/\}/) || node.match(/\]/)) {
-					if (pad !== 0) {
-						pad -= 1;
-					}
-				} else {
-					indent = 0;
-				}
-				for (i = 0; i < pad; i++) {
-					padding += PADDING;
-				}
-				node = node.replace(/("[\s\S]*"):/, '<span class="key">$1</span>:')
-				node = node.replace(/:("[\s\S]*")/, ':<span class="value">$1</span>');
-				node = '<div class="line">' + padding + node + '\r\n</div>';
-				formatted += node;
-				pad += indent;
-			}
-		}
-		return formatted;
-	};
 
 	/**
 	 * 判断是否使json格式数据，true-使，false-否
