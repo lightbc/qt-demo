@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>文本内容压缩</title>
+		<style>
+			.container {
+				display: inline-block;
+				border: 1px solid lightgray;
+				width: 45%;
+				height: 600px;
+			}
+
+			.input {
+				margin: 10px 5px;
+				width: 90%;
+			}
+
+			#content {
+				height: 400px;
+				resize: none;
+			}
+
+			.btn {
+				background-color: lightseagreen;
+				border: 1px solid gray;
+				padding: 7px;
+				color: white;
+			}
+
+			.btn:hover {
+				opacity: .7;
+			}
+
+			#left {
+				position: absolute;
+				left: 10px;
+				padding-left: 20px;
+			}
+
+			#right {
+				position: absolute;
+				right: 10px;
+			}
+
+			.op-sty {
+				border: 1px solid lightgray;
+				padding: 5px;
+				color: #fff;
+				background-color: lightseagreen;
+				cursor: pointer;
+			}
+
+			.show {
+				display: block;
+				position: absolute;
+				top: 7px;
+				right: 7px;
+				cursor: pointer;
+			}
+
+			.hide {
+				display: none;
+			}
+
+			#div {
+				padding: 7px;
+				height: 586px;
+				white-space: nowrap;
+				overflow: auto;
+			}
+
+			.tip {
+				position: fixed;
+				top: 10px;
+				left: 50%;
+				z-index: 99999999;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="left" class="container">
+			<div>
+				<textarea id="content" class="input" placeholder="请输入需要进行压缩的文本内容"></textarea>
+			</div>
+			<div>
+				<input class="btn" type="button" value="Zip" onclick="zip()" title="压缩文本" />
+			</div>
+		</div>
+		<div id="right" class="container">
+			<div id="div"></div>
+			<div id="operate-container" class="hide">
+				<span class="op-sty" onclick="copy()">复制</span>
+				<span class="op-sty" onclick="download()">下载</span>
+			</div>
+		</div>
+	</body>
+</html>
+<script>
+	// 页面窗体加载
+	window.onload = function() {
+		toggle();
+	}
+
+	/**
+	 * 文本压缩
+	 */
+	function zip() {
+		var content = document.getElementById("content");
+		var div = document.getElementById("div");
+		var value = content.value;
+		if (!isEmpty(value)) {
+			var reg = /\s+/g;
+			var nStr = value.replace(reg, "");
+			div.innerHTML = nStr.trim();
+		}
+	}
+
+	/**
+	 * 显隐组件
+	 */
+	function toggle() {
+		var right = document.getElementById("right");
+		var op = document.getElementById("operate-container");
+
+		// 显示操作组件
+		right.onmouseover = function() {
+			var div = document.getElementById("div");
+			var divContent = div.innerText;
+			if (!isEmpty(divContent)) {
+				op.classList.remove("hide");
+				op.classList.add("show");
+			}
+		}
+		// 隐藏操作组件
+		right.onmouseout = function() {
+			op.classList.remove("show");
+			op.classList.add("hide");
+		}
+	}
+
+	/**
+	 * 复制按钮功能
+	 */
+	function copy() {
+		var div = document.getElementById("div");
+		var content = div.innerText;
+
+		// 判断json显示区域的内容是否为空
+		if (!isEmpty(content)) {
+			try {
+				var right = document.getElementById("right");
+				// 创建临时文本域元素
+				var newInput = document.createElement("textarea");
+				// 赋值临时元素
+				newInput.value = content;
+				// 将临时的元素对象添加到文档节点中
+				document.body.appendChild(newInput);
+				// 选中临时元素
+				newInput.select();
+				// 复制临时元素中的内容
+				document.execCommand('Copy');
+				// 删除创建的临时元素
+				document.body.removeChild(newInput);
+				tips("复制", true);
+			} catch (e) {
+				tips("复制", false);
+			}
+		}
+	}
+
+	/**
+	 * 下载内容
+	 */
+	function download() {
+		var div = document.getElementById("div");
+		var content = div.innerText;
+
+		// 判断json显示区域的内容是否为空
+		if (!isEmpty(content)) {
+			try {
+				// 将文本内容转换成blob格式
+				let blob = new Blob([content], {
+					type: "text/plain;charset=utf-8"
+				});
+				// 转换成文件流
+				let reader = new FileReader();
+				reader.readAsDataURL(blob);
+				reader.onload = function(e) {
+					// 创建临时元素
+					let a = document.createElement('a');
+					// 下载时文件名称
+					a.download = new Date().getTime() + ".txt";
+					a.href = e.target.result;
+					// 文档添加临时元素
+					document.body.appendChild(a);
+					// 触发下载
+					a.click();
+					// 删除文档中的临时元素
+					document.body.removeChild(a);
+					tips("下载", true);
+				}
+			} catch (e) {
+				tips("下载", false);
+			}
+		}
+	}
+
+	/**
+	 * 提示信息
+	 * @param {Object} divfix 提示前缀信息（复制/下载）
+	 * @param {Object} success 是否成功，true-成功，false-失败
+	 */
+	function tips(divfix, success) {
+		var tipEle = document.createElement("div");
+		tipEle.setAttribute("class", "tip")
+		// 提示内容
+		var tipContent = "<span style='color:red;padding:7px;background-color:rgba(255,0,0,.2)'>×	" + divfix +
+			"失败！</span>";
+		if (success) {
+			tipContent = "<span style='color:green;padding:7px;background-color:rgba(0,255,0,.2)'>√	" + divfix +
+				"成功！</span>";
+		}
+		tipEle.innerHTML = tipContent;
+		document.body.appendChild(tipEle);
+		// 2秒后移除临时元素
+		setTimeout(function() {
+			document.body.removeChild(tipEle);
+		}, 2000);
+	}
+
+	/**
+	 * 为空判断
+	 * @param {Object} v 判断的值
+	 */
+	function isEmpty(v) {
+		if (undefined == v || null == v || "" == v.trim()) {
+			return true;
+		}
+		return false;
+	}
+</script>
