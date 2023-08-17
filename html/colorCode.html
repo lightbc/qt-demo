@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>HEX/RGB色码</title>
+		<style>
+			body {
+				padding: 30px;
+			}
+
+			.node-container {
+				margin: 20px 0;
+			}
+
+			.node-title {
+				padding: 5px 10px;
+				border-left: 3px solid dodgerblue;
+				font-size: 20px;
+				color: gray;
+			}
+
+			.span-container {
+				display: inline-block;
+			}
+
+			.color-div {
+				margin: 25px;
+				text-align: center;
+			}
+
+			.color-span {
+				display: inline-block;
+				width: 120px;
+				height: 25px;
+				color: gray;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="node-container">
+			<p class="node-title">HEX/RGB<span id="color-count"></span></p>
+			<div id="show">
+			</div>
+		</div>
+	</body>
+</html>
+<script>
+	window.onload = function() {
+		loadRGB();
+	}
+
+	/**
+	 * 加载RGB表示内容
+	 */
+	function loadRGB() {
+		// 颜色总显示数量值
+		var count = 0;
+		// 取值增长量
+		var inc = 15;
+		for (var r = 0; r < 256; r = r + inc) {
+			for (var g = 0; g < 256; g = g + inc) {
+				for (var b = 0; b < 256; b = b + inc) {
+					var rgbCode = "RGB(" + r + "," + g + "," + b + ")";
+					var hexCode = loadHex(r, g, b);
+					createElement(hexCode, rgbCode);
+					count++;
+				}
+			}
+		}
+		var colorCount = document.getElementById("color-count");
+		colorCount.innerText = "(" + count + ")";
+	}
+
+	/** 
+	 * 加载十六进制表示内容
+	 * @param {Object} r 红色色值
+	 * @param {Object} g 绿色色值
+	 * @param {Object} b 蓝色色值
+	 */
+	function loadHex(r, g, b) {
+		var hex = "0123456789ABCDEF";
+		var x, y, z;
+		x = r % 16;
+		r = (r - x) / 16;
+		y = g % 16;
+		g = (g - y) / 16;
+		z = b % 16;
+		b = (b - z) / 16;
+		return "#" + hex.substring(r, r + 1) + hex.substring(x, x + 1) + hex.substring(g, g + 1) + hex.substring(y, y +
+			1) + hex.substring(b, b + 1) + hex.substring(z, z + 1);
+
+	}
+
+	/**
+	 * 创建元素
+	 * @param {Object} hexCode 十六进制表示
+	 * @param {Object} rgbCode rgb表示
+	 */
+	function createElement(hexCode, rgbCode) {
+		// 显示容器
+		var show = document.getElementById("show");
+
+		// 创建显示内容的容器节点元素
+		var div = document.createElement("div");
+		div.classList.add("color-span", "color-div");
+
+		// 创建显示颜色的元素
+		var colorSpan = document.createElement("span");
+		colorSpan.className = "color-span";
+		colorSpan.style = "background-color: " + hexCode + ";";
+
+		// 创建显示十六进制表示的元素
+		var hexSpan = document.createElement("span");
+		hexSpan.className = "color-span";
+		hexSpan.innerText = hexCode;
+
+		// 创建显示rgb表示的元素
+		var rgbSpan = document.createElement("span");
+		rgbSpan.className = "color-span";
+		rgbSpan.innerText = rgbCode;
+
+		// 将创建的元素追加到显示容器中
+		div.appendChild(colorSpan);
+		div.appendChild(hexSpan);
+		div.appendChild(rgbSpan);
+		show.appendChild(div);
+	}
+</script>
