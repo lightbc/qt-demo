@@ -4,134 +4,212 @@
 		<meta charset="utf-8">
 		<title>字符Unicode互转</title>
 		<style>
-			html,body{
+			html,
+			body {
 				margin: 0;
 				padding: 0;
 			}
-			
-			#container{
-				margin-top: 40px;
+
+			#container {
+				padding: 1%;
+			}
+
+			#edit {
 				display: flex;
-				justify-content: center;
 				align-items: center;
+				justify-content: center;
 			}
-			
-			.layout{
-				float: left;
-			}
-			
-			.layout::after{
-				content: "";
-				display: block;
-				clear: both;
-			}
-			
-			.layout textarea{
-				width: 500px;
-				height: 300px;
+
+			textarea {
+				width: 48%;
+				height: 480px;
 				resize: none;
 				color: gray;
 				border: 1px solid gray;
 				outline: none;
 			}
-			
-			#middle input{
-				display: block;
-				margin: 35px 15px;
-			}
-			
-			.convert-i{
-				padding: 7px;
+
+			select {
+				outline: none;
+				border: 1px solid #5F9EA0;
+				padding: 5px 7px;
 				color: gray;
-				background-color: #FFFFFF;
-				border: 1px solid gray;
+				font-size: 16px;
+			}
+
+			#select {
+				margin-left: 1%;
+				margin-bottom: 30px;
+			}
+
+			.tip {
+				position: fixed;
+				top: 10px;
+				left: 40%;
+				z-index: 99999999;
 			}
 			
-			.convert-i:hover{
-				border-color: #5F9EA0;
+			.use-tips{
+				margin-top: 20px;
+				margin-left: 1%;
+				color: #F06900;
+				font-size: 18px;
+				font-weight: 600;
 			}
 		</style>
 	</head>
 	<body>
 		<div id="container">
-			<div id="left" class="layout">
-				<textarea id="leftTextArea"></textarea>
+			<div id="select">
+				<select id="convert-select">
+					<option value="0">中文转Unicode</option>
+					<option value="1">Unicode转中文</option>
+				</select>
 			</div>
-			<div id="middle" class="layout">
-				<input type="button" class="convert-i" value="字符转Unicode>>" onclick="_charactersToUnicode()"/>
-				<input type="button" class="convert-i" value="<<Unicode转字符" onclick="_unicodeToCharacters()"/>
+			<div id="edit">
+				<textarea id="edit-area"></textarea>
+				<textarea id="show-area" style="margin-left: 1%;" readonly></textarea>
 			</div>
-			<div id="right" class="layout">
-				<textarea id="rightTextArea"></textarea>
+			<div class="use-tips">
+				注：<br />
+				1、下拉选择转换项，进行当前转换项匹配。<br />
+				2、左侧文本输入框输入转换前的格式，右侧区域则会显示转换后的内容。<br />
+				3、支持实时输入转换/复制粘贴转换的模式。<br />
 			</div>
 		</div>
 	</body>
 </html>
 <script type="text/javascript">
-	//获取左右文本域元素
-	var leftTextArea=document.getElementById("leftTextArea");
-	var rightTextArea=document.getElementById("rightTextArea");
+	// 转换类型，0-中文转Unicode，1-Unicode转中文
+	var convertType = 0;
+	// 编辑区域
+	var editArea = document.getElementById("edit-area");
+	// 处理结果显示区域
+	var showArea = document.getElementById("show-area");
+
+	window.onload = function() {
+		convertTypeListener();
+		editAreakeyUpListener();
+	}
 
 	/**
-	 * 字符转Unicode
+	 * 编辑区域键盘释放按键事件监听
 	 */
-	function _charactersToUnicode(){
-		var convertValue="";
-		var leftValue=leftTextArea.value;
-		
-		if(leftValue){
-			for(var i=0;i<leftValue.length;i++){
-				convertValue+="\\u"+leftValue.charCodeAt(i).toString(16);
+	function editAreakeyUpListener() {
+		editArea.addEventListener('keyup', function() {
+			// 中文转Unicode
+			if (convertType == 0) {
+				_charactersToUnicode(this);
 			}
-			rightTextArea.value=convertValue.trim();
-		}else{
-			alert("未有相关输入信息!");
+			// Unicode转中文
+			if (convertType == 1) {
+				_unicodeToCharacters(this);
+			}
+		});
+	}
+
+	/**
+	 * 转换类型变换监听
+	 */
+	function convertTypeListener() {
+		var select = document.getElementById("convert-select");
+		select.onchange = function() {
+			convertType = this.value;
+			editArea.value = "";
+			showArea.value = "";
 		}
 	}
-	
+
 	/**
-	 * Unicode转字符
+	 * 中文字符转Unicode
 	 */
-	function _unicodeToCharacters(){
-		var convertValue="";
-		var rightValue=rightTextArea.value;
-		
-		if(rightValue){
-			if(rightValue.indexOf("\\u") != -1){
-				var splitContent=rightValue.split("\\u");
-				for(var i=0;i<splitContent.length;i++){
-					if(!splitContent[i]){
+	function _charactersToUnicode(el) {
+		var convertValue = "";
+		var v = el.value.trim();
+
+		if (v) {
+			for (var i = 0; i < v.length; i++) {
+				// 中文字符则进行转换
+				if (_isChinese(v[i])) {
+					convertValue += "\\u" + v.charCodeAt(i).toString(16);
+				} else {
+					convertValue += v[i];
+				}
+			}
+			showArea.value = convertValue;
+		} else {
+			tips("未有相关输入信息!");
+		}
+	}
+
+	/**
+	 * Unicode转中文字符
+	 */
+	function _unicodeToCharacters(el) {
+		var convertValue = "";
+		var v = el.value.trim();
+
+		if (v) {
+			if (v.indexOf("\\u") != -1) {
+				var splitContent = v.split("\\u");
+				for (var i = 0; i < splitContent.length; i++) {
+					if (!splitContent[i]) {
 						continue;
 					}
-					if(_isUnicode(splitContent[i])){
-						convertValue+=String.fromCharCode(parseInt(splitContent[i],16));
-					}else{
-						alert("输入的内容中检测到非Unicode数据!");
+					if (_isUnicode(splitContent[i])) {
+						convertValue += String.fromCharCode(parseInt(splitContent[i], 16));
+					} else {
+						convertValue += splitContent[i];
 					}
 				}
-				leftTextArea.value=convertValue.trim();
-			}else{
-				alert("输入内容中不包含Unicode格式数据!");
+			} else {
+				convertValue = v;
 			}
-		}else{
-			alert("未有相关Unicode信息输入!");
+			showArea.value = convertValue;
+		} else {
+			tips("未有相关输入信息!");
 		}
 	}
-	
+
+	/**
+	 * 提示
+	 * @param {Object} tip 提示内容
+	 */
+	function tips(tip) {
+		var tipEle = document.createElement("div");
+		tipEle.setAttribute("class", "tip")
+		// 提示内容
+		var tipContent = "<span style='color:red;padding:7px;background-color:rgba(255,255,0,.3)'>×	" + tip + "</span>";
+		tipEle.innerHTML = tipContent;
+		document.body.appendChild(tipEle);
+		// 2秒后移除临时元素
+		setTimeout(function() {
+			document.body.removeChild(tipEle);
+		}, 2000);
+	}
+
 	/**
 	 * 判断是否是完整的Unicode格式数据
 	 * @param {Object} v 检测的字符
 	 */
-	function _isUnicode(v){
-		var regx=/[0-9a-fA-F]/;
-		for(var i=0;i<v.length;i++){
-			if(regx.test(v[i])){
+	function _isUnicode(v) {
+		var regx = /[0-9a-fA-F]/;
+		for (var i = 0; i < v.length; i++) {
+			if (regx.test(v[i])) {
 				continue;
-			}else{
+			} else {
 				return false;
 			}
 		}
 		return true;
 	}
-	
+
+	/**
+	 * 字符是否中文判断
+	 */
+	function _isChinese(c) {
+		var regx =
+			/^[\u3002\uff1b\uff0c\uff1a\u2018\u2019\u201c\u201d\uff08\uff09\u3001\uff1f\u300a\u300b\uff01\u2014\u2026\u2013\uff0e\u4e00-\u9fa5]$/;
+		return regx.test(c);
+	}
 </script>
