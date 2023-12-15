@@ -1,188 +1,209 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 	<head>
-		<meta charset="UTF-8">
-		<title>文件转换Base64文本</title>
+		<meta charset="utf-8">
+		<title>字符Unicode互转</title>
 		<style>
-			*{
-            margin: 0;
-            padding: 0;
-        }
-        body{
-            padding-left: 10px;
-        }
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+			}
 
-        ul li{
-            list-style-type: none;
-            padding-top: 10px;
-        }
+			#container {
+				padding: 1%;
+			}
 
-        .textarea-s{
-            width: 800px;
-            height: 300px;
-        }
-    </style>
+			#edit {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			textarea {
+				width: 48%;
+				height: 480px;
+				resize: none;
+				color: gray;
+				border: 1px solid gray;
+				outline: none;
+			}
+
+			select {
+				outline: none;
+				border: 1px solid #5F9EA0;
+				padding: 5px 7px;
+				color: gray;
+				font-size: 16px;
+			}
+
+			#select {
+				margin-left: 1%;
+				margin-bottom: 30px;
+			}
+
+			.tip {
+				position: fixed;
+				top: 10px;
+				left: 40%;
+				z-index: 99999999;
+			}
+
+			.use-tips {
+				margin-top: 20px;
+				margin-left: 1%;
+				color: #F06900;
+				font-size: 18px;
+				font-weight: 600;
+			}
+		</style>
 	</head>
 	<body>
-		<div>
-			<input type="file" multiple id="cFile" onchange="fileToBase64(this)">
-		</div>
-		<div id="convert-container">
-			<ul></ul>
+		<div id="container">
+			<div id="select">
+				<select id="convert-select">
+					<option value="0">中文转Unicode</option>
+					<option value="1">Unicode转中文</option>
+				</select>
+			</div>
+			<div id="edit">
+				<textarea id="edit-area"></textarea>
+				<textarea id="show-area" style="margin-left: 1%;" readonly></textarea>
+			</div>
+			<div class="use-tips">
+				注：<br />
+				1、下拉选择转换项，进行当前转换项匹配。<br />
+				2、左侧文本输入框输入转换前的格式，右侧区域则会显示转换后的内容。<br />
+				3、支持实时输入转换/复制粘贴转换的模式。<br />
+			</div>
 		</div>
 	</body>
 </html>
-<script src="../js/jquery-3.4.1.js"></script>
-<script>
-	// 输出编码
-	var outCode = 0;
-	var list = [];
+<script type="text/javascript">
+	// 转换类型，0-中文转Unicode，1-Unicode转中文
+	var convertType = 0;
+	// 编辑区域
+	var editArea = document.getElementById("edit-area");
+	// 处理结果显示区域
+	var showArea = document.getElementById("show-area");
+
+	window.onload = function() {
+		convertTypeListener();
+		editAreakeyUpListener();
+	}
 
 	/**
-	 * 将文件转换成base64
-	 * @param e 目标对象
+	 * 编辑区域键盘释放按键事件监听
 	 */
-	function fileToBase64(e) {
-		// 选择的文件对象
-		var files = e.files;
-		var filesArr = [];
-		for (var i = 0; i < files.length; i++) {
-			filesArr.push(files[i]);
-		}
-		// 获取文件组数，将文件分组
-		var filesGroup = Math.ceil(filesArr.length / 5);
-		for (var i = 0; i < filesGroup; i++) {
-			_doFiles(filesArr.slice(i * 5, (i + 1) * 5));
+	function editAreakeyUpListener() {
+		editArea.addEventListener('keyup', function() {
+			// 中文转Unicode
+			if (convertType == 0) {
+				_charactersToUnicode(this);
+			}
+			// Unicode转中文
+			if (convertType == 1) {
+				_unicodeToCharacters(this);
+			}
+		});
+	}
+
+	/**
+	 * 转换类型变换监听
+	 */
+	function convertTypeListener() {
+		var select = document.getElementById("convert-select");
+		select.onchange = function() {
+			convertType = this.value;
+			editArea.value = "";
+			showArea.value = "";
 		}
 	}
 
 	/**
-	 * 实际将文件转换成base64处理方法
-	 * @param e 目标对象
-	 * @private 私有方法
+	 * 中文字符转Unicode
 	 */
-	function _convertFileToBase64(e) {
-		// 文件名称
-		var name = e.name;
-		// 文件大小
-		var size = e.size;
-		outCode++;
-		var tip = "<li id='n" + outCode + "'>" +
-			"<p>" +
-			"<span>编码：" + outCode + "</span>" +
-			"&nbsp;&nbsp;&#921;&nbsp;&nbsp;" +
-			"<span>文件名：" + name + "</span>" +
-			"&nbsp;&nbsp;&#921;&nbsp;&nbsp;" +
-			"<span>文件大小：" + _formatSize(size) + "</span>" +
-			"</p>" +
-			"<textarea class='textarea-s'>正在转化中...</textarea>" +
-			"</li>";
-		$("#convert-container ul").append(tip);
-		list.push(e);
+	function _charactersToUnicode(el) {
+		var convertValue = "";
+		var v = el.value.trim();
+
+		if (v) {
+			for (var i = 0; i < v.length; i++) {
+				// 中文字符则进行转换
+				if (_isChinese(v[i])) {
+					convertValue += "\\u" + v.charCodeAt(i).toString(16);
+				} else {
+					convertValue += v[i];
+				}
+			}
+		} else {
+			tips("未有相关输入信息!");
+		}
+		showArea.value = convertValue;
 	}
 
 	/**
-	 * 处理文件大小限制判断
-	 * @param size 文件大小
-	 * @returns {{msg: *, code: *}} 返回结果，msg:消息内容，code：消息代码
-	 * @private 私有方法
+	 * Unicode转中文字符
 	 */
-	function _fileSizeLimit(size) {
-		var re;
-		var code = "01";
-		var msg = "传值为空！";
-		if (!_isEmpty(size)) {
-			var s = parseInt(size);
-			if ("NaN" == s.toString()) {
-				code = "02";
-				msg = "传值中包含非数值类型!";
+	function _unicodeToCharacters(el) {
+		var v = el.value.trim();
+
+		if (v) {
+			// 匹配字符串中的所有Unicode格式中文字符
+			var regx = /\\[uU].{4}/g;
+			var mv = v.match(regx);
+			if (mv) {
+				for (var i = 0; i < mv.length; i++) {
+					// 将Unicode中文字符替换成中文，去除\u后解析成中文
+					v = v.replace(mv[i], String.fromCharCode(parseInt(mv[i].substring(2), 16)));
+				}
+			}
+		} else {
+			tips("未有相关输入信息!");
+		}
+		showArea.value = v;
+	}
+
+	/**
+	 * 提示
+	 * @param {Object} tip 提示内容
+	 */
+	function tips(tip) {
+		var tipEle = document.createElement("div");
+		tipEle.setAttribute("class", "tip")
+		// 提示内容
+		var tipContent = "<span style='color:red;padding:7px;background-color:rgba(255,255,0,.3)'>×	" + tip + "</span>";
+		tipEle.innerHTML = tipContent;
+		document.body.appendChild(tipEle);
+		// 2秒后移除临时元素
+		setTimeout(function() {
+			document.body.removeChild(tipEle);
+		}, 2000);
+	}
+
+	/**
+	 * 判断是否是完整的Unicode格式数据
+	 * @param {Object} v 检测的字符
+	 */
+	function _isUnicode(v) {
+		var regx = /[0-9a-fA-F]/;
+		for (var i = 0; i < v.length; i++) {
+			if (regx.test(v[i])) {
+				continue;
 			} else {
-				// 限制大小为5M
-				var limit = 1024 * 1024 * 5;
-				if (size > limit) {
-					code = "03";
-					msg = "文件最大限制为5M，已超出处理范围，无法处理！";
-				} else {
-					code = "00";
-					msg = "处理成功！";
-				}
+				return false;
 			}
 		}
-		re = {
-			"code": code,
-			"msg": msg
-		};
-		return re;
+		return true;
 	}
 
 	/**
-	 * 格式数据大小显示形式
-	 * @param size 数据大小-字节
-	 * @returns {*} 不为空返回格式结果，为空返回0
-	 * @private 私有方法
+	 * 字符是否中文判断
 	 */
-	function _formatSize(size) {
-		var r;
-		if (!_isEmpty(size)) {
-			var s = parseInt(size);
-			if ("NaN" != s.toString()) {
-				var j = 1024 * 1024;
-				if (s > j) {
-					r = (s / j).toFixed(1) + "M";
-				} else {
-					r = (s / 1024).toFixed(1) + "K";
-				}
-			}
-		}
-		return !_isEmpty(r) ? r : 0;
-	}
-
-	/**
-	 * 判断处理的值是否为空或未定义
-	 * @param v 传值
-	 * @returns {boolean} 返回布尔类型值，true:为空或未定义，false：不为空
-	 * @private 私有方法
-	 */
-	function _isEmpty(v) {
-		if (v == undefined || v == "" || v == null) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * 批量处理文件
-	 * @param files 批量文件
-	 * @private 私有方法
-	 */
-	function _doFiles(files) {
-		if (!_isEmpty(files)) {
-			$.each(files, function() {
-				var r = _fileSizeLimit(this.size);
-				if ("00" == r.code) {
-					console.log(r.msg);
-					_convertFileToBase64(this);
-				} else {
-					console.log(r.msg);
-					// ...
-				}
-			});
-			_writeText();
-		}
-	}
-
-	/**
-	 * 向指定文本区域输出转码后的内容
-	 */
-	function _writeText() {
-		if (!_isEmpty(list)) {
-			$.each(list, function(index) {
-				var reader = new FileReader();
-				reader.readAsDataURL(this);
-				reader.onload = function() {
-					$("#n" + (index + 1) + " textarea").html(this.result);
-				}
-			});
-		}
+	function _isChinese(c) {
+		// 匹配中文汉字/字符标点
+		var regx =
+			/^[\u3002\uff1b\uff0c\uff1a\u2018\u2019\u201c\u201d\uff08\uff09\u3001\uff1f\u300a\u300b\uff01\u2014\u2026\u2013\uff0e\u4e00-\u9fa5]$/;
+		return regx.test(c);
 	}
 </script>
