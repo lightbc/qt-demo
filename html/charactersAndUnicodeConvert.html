@@ -48,8 +48,8 @@
 				left: 40%;
 				z-index: 99999999;
 			}
-			
-			.use-tips{
+
+			.use-tips {
 				margin-top: 20px;
 				margin-left: 1%;
 				color: #F06900;
@@ -150,25 +150,42 @@
 		var v = el.value.trim();
 
 		if (v) {
-			if (v.indexOf("\\u") != -1) {
-				var splitContent = v.split("\\u");
-				for (var i = 0; i < splitContent.length; i++) {
-					if (!splitContent[i]) {
-						continue;
-					}
-					if (_isUnicode(splitContent[i])) {
-						convertValue += String.fromCharCode(parseInt(splitContent[i], 16));
-					} else {
-						convertValue += splitContent[i];
-					}
+			if (v.indexOf("\n") != -1) {
+				var vs = v.split("\n");
+				for (var i = 0; i < vs.length; i++) {
+					convertValue += _unicodeToCharactersWithOneLine(vs[i]) + "\n";
 				}
 			} else {
-				convertValue = v;
+				convertValue = _unicodeToCharactersWithOneLine(v);
 			}
 			showArea.value = convertValue;
 		} else {
 			tips("未有相关输入信息!");
 		}
+	}
+
+	/**
+	 * Unicode转中文字符，单行处理
+	 * @param {Object} v 处理值
+	 */
+	function _unicodeToCharactersWithOneLine(v) {
+		var convertValue = "";
+		if (v.indexOf("\\u") != -1) {
+			var splitContent = v.split("\\u");
+			for (var i = 0; i < splitContent.length; i++) {
+				if (!splitContent[i]) {
+					continue;
+				}
+				if (_isUnicode(splitContent[i])) {
+					convertValue += String.fromCharCode(parseInt(splitContent[i], 16));
+				} else {
+					convertValue += splitContent[i];
+				}
+			}
+		} else {
+			convertValue = v;
+		}
+		return convertValue;
 	}
 
 	/**
