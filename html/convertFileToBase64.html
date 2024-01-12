@@ -4,24 +4,25 @@
 		<meta charset="UTF-8">
 		<title>文件转换Base64文本</title>
 		<style>
-			*{
-            margin: 0;
-            padding: 0;
-        }
-        body{
-            padding-left: 10px;
-        }
+			* {
+				margin: 0;
+				padding: 0;
+			}
 
-        ul li{
-            list-style-type: none;
-            padding-top: 10px;
-        }
+			body {
+				padding-left: 10px;
+			}
 
-        .textarea-s{
-            width: 800px;
-            height: 300px;
-        }
-    </style>
+			ul li {
+				list-style-type: none;
+				padding-top: 10px;
+			}
+
+			.textarea-s {
+				width: 800px;
+				height: 300px;
+			}
+		</style>
 	</head>
 	<body>
 		<div>
@@ -160,10 +161,10 @@
 			$.each(files, function() {
 				var r = _fileSizeLimit(this.size);
 				if ("00" == r.code) {
-					console.log(r.msg);
+					alert(r.msg);
 					_convertFileToBase64(this);
 				} else {
-					console.log(r.msg);
+					alert(r.msg);
 					// ...
 				}
 			});
