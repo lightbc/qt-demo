@@ -15,6 +15,7 @@
 			}
 
 			#edit {
+				position: relative;
 				display: flex;
 				align-items: center;
 				justify-content: center;
@@ -56,6 +57,32 @@
 				font-size: 18px;
 				font-weight: 600;
 			}
+
+			#operate {
+				position: absolute;
+				top: 10px;
+				right: 20px;
+			}
+
+			#operate:hover {
+				visibility: visible;
+			}
+
+			.copy {
+				border: 1px solid lightgray;
+				padding: 5px;
+				color: #fff;
+				background-color: lightseagreen;
+				cursor: pointer;
+			}
+
+			.show {
+				visibility: visible;
+			}
+
+			.hide {
+				visibility: hidden;
+			}
 		</style>
 	</head>
 	<body>
@@ -69,6 +96,9 @@
 			<div id="edit">
 				<textarea id="edit-area"></textarea>
 				<textarea id="show-area" style="margin-left: 1%;" readonly></textarea>
+				<div id="operate" class="hide">
+					<span class="copy" onclick="copy()">复制</span>
+				</div>
 			</div>
 			<div class="use-tips">
 				注：<br />
@@ -90,6 +120,7 @@
 	window.onload = function() {
 		convertTypeListener();
 		editAreakeyUpListener();
+		toggleOperate();
 	}
 
 	/**
@@ -228,5 +259,34 @@
 		var regx =
 			/^[\u3002\uff1b\uff0c\uff1a\u2018\u2019\u201c\u201d\uff08\uff09\u3001\uff1f\u300a\u300b\uff01\u2014\u2026\u2013\uff0e\u4e00-\u9fa5]$/;
 		return regx.test(c);
+	}
+
+	/**
+	 * 显隐操作组件
+	 */
+	function toggleOperate() {
+		let showArea = document.getElementById("show-area");
+		let operate = document.getElementById("operate");
+		showArea.onmouseover = function() {
+			operate.classList.remove("hide");
+			operate.classList.add("show");
+		}
+		showArea.onmouseout = function() {
+			operate.classList.remove("show");
+			operate.classList.add("hide");
+		}
+	}
+
+	/**
+	 * 文本复制
+	 */
+	function copy() {
+		let txt = document.getElementById("show-area");
+		// 选中文本
+		txt.select();
+		// 执行复制文本命令
+		document.execCommand("Copy");
+		//移除焦点
+		txt.blur();
 	}
 </script>
