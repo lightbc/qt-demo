@@ -1,10 +1,68 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta charset="utf-8" />
+		<meta charset="utf-8">
 		<title></title>
+		<style>
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				height: 100%;
+			}
+
+			#select {
+				position: absolute;
+				right: 0;
+				z-index: 99999;
+			}
+
+			iframe {
+				margin-top: 20px;
+				border: none;
+				width: 100%;
+				height: 100%;
+			}
+		</style>
 	</head>
 	<body>
-		
+		<select id="select" onchange="showTab()">
+			<option value="0">中文-Unicode互转</option>
+			<option value="1">文件转Base64</option>
+			<option value="2">JSON格式化</option>
+			<option value="3">转JSON</option>
+			<option value="4">文本压缩</option>
+			<option value="5">HEX/RGB</option>
+			<option value="6">SVG转PNG</option>
+		</select>
+		<iframe id="iframe" src="html/charactersAndUnicodeConvert.html"></iframe>
 	</body>
 </html>
+<script>
+	function showTab() {
+		let select = document.getElementById("select");
+		let type = select.value;
+
+		let iframe = document.getElementById("iframe");
+		let src = "html/charactersAndUnicodeConvert.html";
+		if (type == 1) {
+			src = "html/convertFileToBase64.html";
+		}
+		if (type == 2) {
+			src = "html/formatJson.html";
+		}
+		if (type == 3) {
+			src = "html/singleDataToJson.html";
+		}
+		if (type == 4) {
+			src = "html/strZip.html";
+		}
+		if (type == 5) {
+			src = "html/colorCode.html";
+		}
+		if (type == 6) {
+			src = "html/ConvertImage.html";
+		}
+		iframe.src = src;
+	}
+</script>
